@@ -71,15 +71,15 @@ jobs:
             echo "===== Creating Docker network (if not exists) ====="
             docker network create ubora-net || true
 
-            echo "===== Starting AI Engine ====="
+            echo "===== Starting AI Engine (port 8500) ====="
             docker run -d \
               --name ubora-ai-engine \
               --network ubora-net \
               --restart always \
-              -p 8000:8000 \
+              -p 8500:8000 \
               ahmad575/ubora-ai-engine:latest
 
-            echo "===== Starting Express Server ====="
+            echo "===== Starting Express Server (port 3001) ====="
             docker run -d \
               --name ubora-server \
               --network ubora-net \
@@ -101,12 +101,12 @@ jobs:
               -e ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}" \
               ahmad575/ubora-server:latest
 
-            echo "===== Starting Nginx Client ====="
+            echo "===== Starting Nginx Client (port 8080) ====="
             docker run -d \
               --name ubora-client \
               --network ubora-net \
               --restart always \
-              -p 80:80 \
+              -p 8080:80 \
               ahmad575/ubora-client:latest
 
             echo "===== Deployment completed! ====="
