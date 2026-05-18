@@ -1,0 +1,113 @@
+name: Ubora Trading Platform CI/CD
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: docker.io
+  DOCKER_USER: ahmad575
+  IMAGE_TAG: latest
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: server
+            image: ahmad575/ubora-server
+            context: ./server
+          - service: client
+            image: ahmad575/ubora-client
+            context: ./client
+          - service: ai-engine
+            image: ahmad575/ubora-ai-engine
+            context: ./ai-engine
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_UNAME }}
+          password: ${{ secrets.DOCKER_PASS }}
+
+      - name: Build and push ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/Dockerfile
+          push: true
+          tags: ${{ matrix.image }}:${{ env.IMAGE_TAG }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SSH & deploy to EC2
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_SERVER_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SERVER_KEY }}
+          script: |
+            echo "===== Logging in to Docker Hub ====="
+            echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_UNAME }}" --password-stdin
+
+            echo "===== Pulling latest images ====="
+            docker pull ahmad575/ubora-server:latest
+            docker pull ahmad575/ubora-client:latest
+            docker pull ahmad575/ubora-ai-engine:latest
+
+            echo "===== Stopping old containers ====="
+            docker stop ubora-server ubora-client ubora-ai-engine || true
+            docker rm ubora-server ubora-client ubora-ai-engine || true
+
+            echo "===== Creating Docker network (if not exists) ====="
+            docker network create ubora-net || true
+
+            echo "===== Starting AI Engine ====="
+            docker run -d \
+              --name ubora-ai-engine \
+              --network ubora-net \
+              --restart always \
+              -p 8000:8000 \
+              ahmad575/ubora-ai-engine:latest
+
+            echo "===== Starting Express Server ====="
+            docker run -d \
+              --name ubora-server \
+              --network ubora-net \
+              --restart always \
+              -p 3001:3001 \
+              -e NODE_ENV=production \
+              -e PORT=3001 \
+              -e MONGO_URI="${{ secrets.MONGO_URI }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
+              -e BSC_RPC_URL="https://bsc-dataseed.binance.org" \
+              -e CLIENT_URL="${{ secrets.CLIENT_URL }}" \
+              -e AI_ENGINE_URL="http://ubora-ai-engine:8000" \
+              -e BINANCE_BASE_URL="https://api.binance.com" \
+              -e ALPHA_VANTAGE_API_KEY="${{ secrets.ALPHA_VANTAGE_API_KEY }}" \
+              -e POCKET_OPTION_HEADLESS=true \
+              -e POCKET_OPTION_SIMULATE_ONLY=true \
+              -e POCKET_OPTION_URL="https://pocketoption.com/en/cabinet/demo-quick-high-low/" \
+              -e ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}" \
+              ahmad575/ubora-server:latest
+
+            echo "===== Starting Nginx Client ====="
+            docker run -d \
+              --name ubora-client \
+              --network ubora-net \
+              --restart always \
+              -p 80:80 \
+              ahmad575/ubora-client:latest
+
+            echo "===== Deployment completed! ====="
+            docker ps

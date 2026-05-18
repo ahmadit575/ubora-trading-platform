@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+__pycache__/
+
+# Environment files (NEVER push secrets)
+.env
+.env.local
+.env.production
+contracts/.env
+
+# Build outputs
+client/dist/
+server/logs/
+
+# IDE
+.vscode/
+.idea/
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Hardhat
+contracts/artifacts/
+contracts/cache/
+contracts/ignition/deployments/
+
+# Docker
+*.log
