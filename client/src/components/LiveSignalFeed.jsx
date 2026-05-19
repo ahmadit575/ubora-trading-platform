@@ -9,11 +9,14 @@ function SignalCard({ signal, index }) {
   
   const duration = signal.strategy === 'scalping' ? '1 Min' : '1 Day';
   const ts = new Date(signal.gmtTimestamp);
-  const entryTime = new Date(ts.getTime() - 2 * 60 * 1000);
+  const signalTimeStr = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  
+  // Add 1-minute buffer/delay for Entry Time (future relative to signal generation)
+  const entryTime = new Date(ts.getTime() + 1 * 60 * 1000);
   const durationMs = signal.strategy === 'scalping' ? 1 * 60 * 1000 : 24 * 60 * 60 * 1000;
   const exitTime = new Date(entryTime.getTime() + durationMs);
 
-  const formatTime = (d) => d.toISOString().substring(11, 19) + ' GMT';
+  const formatTime = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
     <div className="glass-card-sm animate-fade-in" style={{ animationDelay: `${index * 60}ms` }}>
@@ -23,7 +26,10 @@ function SignalCard({ signal, index }) {
           <span className={signal.direction === 'BUY' ? 'badge-buy' : 'badge-sell'}>{signal.direction}</span>
           <span className={signal.strategy === 'scalping' ? 'pill-scalping' : 'pill-daily'}>{signal.strategy}</span>
         </div>
-        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 600 }}>Dur: {duration}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end' }}>
+          <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 600 }}>Dur: {duration}</span>
+          <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{signalTimeStr}</span>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
@@ -35,7 +41,7 @@ function SignalCard({ signal, index }) {
         </div>
         <div>
           <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Entry Time</div>
-          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8', fontFamily: 'monospace' }}>{formatTime(entryTime)}</div>
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e2e8f0', fontFamily: 'monospace' }}>{formatTime(entryTime)}</div>
         </div>
         <div>
           <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Exit Time</div>

@@ -21,19 +21,23 @@ export default function MarketSessionClock() {
   const day = time.getUTCDay();
   const isWeekday = day > 0 && day < 6;
 
-  const formatGMT = () => {
-    return time.toISOString().replace('T', '  ').substring(0, 21) + ' GMT';
+  const formatClock = () => {
+    const localTimeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const localDateStr = time.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeZoneName = Intl.DateTimeFormat().resolvedOptions().timeZone.split('/')[1] || 'Local';
+    const gmtStr = time.toISOString().substring(11, 19) + ' GMT';
+    return `${localDateStr}  ${localTimeStr} (${timeZoneName.replace('_', ' ')})  •  ${gmtStr}`;
   };
 
   return (
     <div className="glass-card" style={{ padding: '16px 24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-        {/* GMT Clock and Connection Status */}
+        {/* Real-time Clock and Connection Status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Clock size={20} style={{ color: '#3b82f6' }} />
-            <span style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'monospace', color: '#f1f5f9', letterSpacing: '0.05em' }}>
-              {formatGMT()}
+            <span style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'monospace', color: '#f1f5f9', letterSpacing: '0.03em' }}>
+              {formatClock()}
             </span>
           </div>
           {connected ? (

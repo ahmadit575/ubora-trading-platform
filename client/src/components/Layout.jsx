@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
-import { LayoutDashboard, Signal, Bot, Wallet, Settings, LogOut, TrendingUp, Wifi, WifiOff } from 'lucide-react';
+import { LayoutDashboard, Signal, Bot, Wallet, Settings, LogOut, TrendingUp, Wifi, WifiOff, Menu, X } from 'lucide-react';
 
 export default function Layout() {
   const { user, logout, hasRole } = useAuth();
   const { connected } = useSocket();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -33,23 +35,118 @@ export default function Layout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar */}
-      <aside style={{ width: '260px', background: 'var(--color-dark-900)', borderRight: '1px solid var(--color-glass-border)', padding: '20px 16px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 40 }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .app-sidebar {
+            transform: translateX(${sidebarOpen ? '0' : '-100%'});
+            box-shadow: ${sidebarOpen ? '4px 0 24px rgba(0,0,0,0.5)' : 'none'};
+          }
+          .app-main {
+            margin-left: 0 !important;
+            padding: 84px 16px 24px 16px !important;
+          }
+          .mobile-header {
+            display: flex !important;
+          }
+          .sidebar-overlay {
+            display: ${sidebarOpen ? 'block' : 'none'} !important;
+          }
+          .mobile-close-btn {
+            display: block !important;
+          }
+        }
+      `}</style>
+
+      {/* Floating/fixed header on Mobile */}
+      <header className="mobile-header" style={{
+        display: 'none',
+        position: 'fixed',
+        top: 0, left: 0, right: 0,
+        height: '60px',
+        background: '#090d16',
+        borderBottom: '1px solid var(--color-glass-border)',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 16px',
+        zIndex: 35
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button 
+            onClick={() => setSidebarOpen(true)} 
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
+          >
+            <Menu size={24} />
+          </button>
+          <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f1f5f9' }}>Ubora Trading</span>
+        </div>
+        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <TrendingUp size={16} color="#fff" />
+        </div>
+      </header>
+
+      {/* Overlay backdrop when mobile sidebar drawer is pulled open */}
+      <div 
+        className="sidebar-overlay"
+        onClick={() => setSidebarOpen(false)}
+        style={{
+          display: 'none',
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 38
+        }}
+      />
+
+      {/* Sidebar Drawer */}
+      <aside className="app-sidebar" style={{ 
+        width: '260px', 
+        background: '#090d16', 
+        borderRight: '1px solid var(--color-glass-border)', 
+        padding: '20px 16px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        position: 'fixed', 
+        top: 0, left: 0, bottom: 0, 
+        zIndex: 40,
+        transition: 'transform 0.3s ease-in-out'
+      }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', marginBottom: '32px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <TrendingUp size={20} color="#fff" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <TrendingUp size={20} color="#fff" />
+            </div>
+            <div>
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#f1f5f9' }}>Ubora Trading</div>
+              <div style={{ fontSize: '0.65rem', color: '#475569' }}>AI Platform v1.0</div>
+            </div>
           </div>
-          <div>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#f1f5f9' }}>Ubora Trading</div>
-            <div style={{ fontSize: '0.65rem', color: '#475569' }}>AI Platform v1.0</div>
-          </div>
+          <button 
+            className="mobile-close-btn"
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              display: 'none',
+              background: 'none',
+              border: 'none',
+              color: '#64748b',
+              cursor: 'pointer',
+              padding: '6px'
+            }}
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Nav Links */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
           {links.filter(l => l.roles.some(r => user?.role === r)).map((link) => (
-            <NavLink key={link.to} to={link.to} style={({ isActive }) => navLinkStyle(isActive)}>
+            <NavLink 
+              key={link.to} 
+              to={link.to} 
+              style={({ isActive }) => navLinkStyle(isActive)}
+              onClick={() => setSidebarOpen(false)}
+            >
               <link.icon size={18} />
               {link.label}
             </NavLink>
@@ -77,7 +174,7 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, marginLeft: '260px', padding: '24px 32px', minHeight: '100vh' }}>
+      <main className="app-main" style={{ flex: 1, marginLeft: '260px', padding: '24px 32px', minHeight: '100vh', width: '100%' }}>
         <Outlet />
       </main>
     </div>
