@@ -22,6 +22,9 @@ import mt5Routes from './routes/mt5.routes.js';
 const app = express();
 const httpServer = createServer(app);
 
+// Trust reverse proxy (nginx) — required for correct IP detection behind proxy
+app.set('trust proxy', 1);
+
 // CORS origins — support production domain + local dev
 const allowedOrigins = [
   env.CLIENT_URL,

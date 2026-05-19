@@ -94,6 +94,7 @@ jobs:
               -e CLIENT_URL="${{ secrets.CLIENT_URL }}" \
               -e AI_ENGINE_URL="http://ubora-ai-engine:8000" \
               -e BINANCE_BASE_URL="https://api.binance.com" \
+              -e BINANCE_PROXY_URL="${{ secrets.BINANCE_PROXY_URL }}" \
               -e ALPHA_VANTAGE_API_KEY="${{ secrets.ALPHA_VANTAGE_API_KEY }}" \
               -e POCKET_OPTION_HEADLESS=true \
               -e POCKET_OPTION_SIMULATE_ONLY=true \

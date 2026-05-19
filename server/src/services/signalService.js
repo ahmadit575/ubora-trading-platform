@@ -13,9 +13,21 @@ export const fetchMarketData = async (pair, strategy) => {
     if (isCryptoPair(pair)) {
       const sym = pair.replace('/', '');
       const interval = strategy === 'scalping' ? '5m' : '1d';
-      const res = await axios.get(`${env.BINANCE_BASE_URL}/api/v3/klines`, {
+
+      // Build axios config with optional Squid proxy for geo-restricted regions
+      const axiosConfig = {
         params: { symbol: sym, interval, limit: 200 },
-      });
+      };
+      if (env.BINANCE_PROXY_URL) {
+        const proxyUrl = new URL(env.BINANCE_PROXY_URL);
+        axiosConfig.proxy = {
+          host: proxyUrl.hostname,
+          port: parseInt(proxyUrl.port, 10),
+          protocol: proxyUrl.protocol,
+        };
+      }
+
+      const res = await axios.get(`${env.BINANCE_BASE_URL}/api/v3/klines`, axiosConfig);
       return res.data.map(c => ({
         timestamp: c[0], open: +c[1], high: +c[2], low: +c[3], close: +c[4], volume: +c[5],
       }));

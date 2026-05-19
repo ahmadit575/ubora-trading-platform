@@ -13,6 +13,7 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url().default('http://localhost:5173'),
   AI_ENGINE_URL: z.string().url().default('http://localhost:8000'),
   BINANCE_BASE_URL: z.string().url().default('https://api.binance.com'),
+  BINANCE_PROXY_URL: z.string().optional().default(''),
   ALPHA_VANTAGE_API_KEY: z.string().default('demo'),
   POCKET_OPTION_API_KEY: z.string().optional().default(''),
   POCKET_OPTION_HEADLESS: z.string().optional().default('false'),
