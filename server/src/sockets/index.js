@@ -7,6 +7,7 @@ export const initSocketServer = (io) => {
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token || socket.handshake.query?.token;
     if (!token) {
+      logger.warn(`Socket auth rejected: no token provided (origin: ${socket.handshake.headers?.origin})`);
       return next(new Error('Authentication required'));
     }
     try {
@@ -14,6 +15,7 @@ export const initSocketServer = (io) => {
       socket.user = decoded;
       next();
     } catch (err) {
+      logger.warn(`Socket auth rejected: ${err.message} (origin: ${socket.handshake.headers?.origin})`);
       return next(new Error('Invalid token'));
     }
   });

@@ -32,10 +32,10 @@ const allowedOrigins = [
   'http://localhost:8080',
 ].filter(Boolean);
 
-// Socket.io
+// Socket.io — CORS is permissive since all traffic comes through nginx reverse proxy
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
+    origin: true,
     methods: ['GET', 'POST'],
     credentials: true,
   },

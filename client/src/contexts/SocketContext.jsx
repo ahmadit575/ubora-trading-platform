@@ -28,6 +28,9 @@ export function SocketProvider({ children }) {
 
     s.on('connect', () => setConnected(true));
     s.on('disconnect', () => setConnected(false));
+    s.on('connect_error', (err) => {
+      console.error('[Socket.io] Connection error:', err.message);
+    });
 
     setSocket(s);
 
