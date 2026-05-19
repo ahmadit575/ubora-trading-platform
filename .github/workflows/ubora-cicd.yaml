@@ -97,7 +97,7 @@ jobs:
               -e BINANCE_PROXY_URL="${{ secrets.BINANCE_PROXY_URL }}" \
               -e ALPHA_VANTAGE_API_KEY="${{ secrets.ALPHA_VANTAGE_API_KEY }}" \
               -e POCKET_OPTION_HEADLESS=true \
-              -e POCKET_OPTION_SIMULATE_ONLY=true \
+              -e POCKET_OPTION_SIMULATE_ONLY="${{ secrets.POCKET_OPTION_SIMULATE_ONLY || 'false' }}" \
               -e POCKET_OPTION_URL="https://pocketoption.com/en/cabinet/demo-quick-high-low/" \
               -e ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}" \
               ahmad575/ubora-server:latest
