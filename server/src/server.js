@@ -56,14 +56,14 @@ app.use(cookieParser());
 app.use(apiLimiter);
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/signals', signalRoutes);
-app.use('/api/robots', robotRoutes);
-app.use('/api/staking', stakingRoutes);
-app.use('/api/mt5', mt5Routes);
+app.use('/auth', authRoutes);
+app.use('/signals', signalRoutes);
+app.use('/robots', robotRoutes);
+app.use('/staking', stakingRoutes);
+app.use('/mt5', mt5Routes);
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({
     success: true,
     data: {
