@@ -7,6 +7,7 @@ export default function RobotsPage() {
   const [robots, setRobots] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [logs, setLogs] = useState(null);
+  const [screencasts, setScreencasts] = useState({});
   const [form, setForm] = useState({ name: '', platform: 'pocket_option', strategy: 'scalping', config: { pairs: ['BTC/USDT'], lotSize: 0.01, maxOpenTrades: 3, slPercent: 1, tpPercent: 2, gmtSessionFilter: ['london', 'new_york'] } });
   const { socket } = useSocket();
 
@@ -18,8 +19,26 @@ export default function RobotsPage() {
 
   useEffect(() => {
     if (!socket) return;
+    
     socket.on('robot:status', () => fetchRobots());
-    return () => socket.off('robot:status');
+    
+    socket.on('trade:screencast', ({ robotId, image }) => {
+      setScreencasts(prev => ({ ...prev, [robotId]: image }));
+    });
+
+    socket.on('trade:closed', ({ robotId }) => {
+      setScreencasts(prev => {
+        const next = { ...prev };
+        delete next[robotId];
+        return next;
+      });
+    });
+
+    return () => {
+      socket.off('robot:status');
+      socket.off('trade:screencast');
+      socket.off('trade:closed');
+    };
   }, [socket]);
 
   const handleAction = async (id, action) => {
@@ -73,6 +92,20 @@ export default function RobotsPage() {
               <div><span style={{ color: '#64748b' }}>Max Trades:</span> <span style={{ color: '#cbd5e1' }}>{r.config?.maxOpenTrades}</span></div>
               <div><span style={{ color: '#64748b' }}>SL/TP:</span> <span style={{ color: '#cbd5e1' }}>{r.config?.slPercent}% / {r.config?.tpPercent}%</span></div>
             </div>
+
+            {screencasts[r._id] && (
+              <div style={{ marginTop: '12px', marginBottom: '16px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #334155', background: '#0b0f19' }}>
+                <div style={{ background: '#1e293b', padding: '6px 12px', fontSize: '0.7rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold' }}>
+                  <span className="status-led status-running" style={{ width: '8px', height: '8px', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                  LIVE BOT TERMINAL VIEW
+                </div>
+                <img 
+                  src={screencasts[r._id]} 
+                  alt="Live Bot View" 
+                  style={{ width: '100%', height: 'auto', display: 'block', imageRendering: 'crisp-edges' }} 
+                />
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '8px' }}>
               {r.status !== 'running' && <button className="btn-sm btn-success" onClick={() => handleAction(r._id, 'start')}><Play size={12} /> Start</button>}

@@ -84,6 +84,30 @@ export const executePocketOptionTrade = async (robot, signal, io) => {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     );
 
+    // Start Live Screencast Broadcast to Frontend
+    let screencastInterval = null;
+    if (io) {
+      screencastInterval = setInterval(async () => {
+        try {
+          if (!page || page.isClosed()) {
+            clearInterval(screencastInterval);
+            return;
+          }
+          const screenshot = await page.screenshot({
+            type: 'jpeg',
+            quality: 40,
+            encoding: 'base64',
+          });
+          io.emit('trade:screencast', {
+            robotId: robot._id,
+            image: `data:image/jpeg;base64,${screenshot}`,
+          });
+        } catch (err) {
+          // Silent catch for page closures/nav transitions
+        }
+      }, 1500);
+    }
+
     logger.info(`🌐 Navigating to Pocket Option URL: ${env.POCKET_OPTION_URL}`);
     await page.goto(env.POCKET_OPTION_URL, { waitUntil: 'networkidle2', timeout: 30000 });
 
@@ -162,6 +186,12 @@ export const executePocketOptionTrade = async (robot, signal, io) => {
     // 5. Wait for the trade to close
     await new Promise((resolve) => setTimeout(resolve, tradeDuration + 2000));
 
+    // Stop screencast after execution complete
+    if (screencastInterval) {
+      clearInterval(screencastInterval);
+      screencastInterval = null;
+    }
+
     // 6. Simple outcome logic based on balance change if we can read it,
     // otherwise fallback to price-action mock simulation based on confidence score.
     // For demo stability, we will simulate the win/loss based on confidence score
@@ -193,6 +223,10 @@ export const executePocketOptionTrade = async (robot, signal, io) => {
     pnl = isWin ? parseFloat((lotSize * 0.85).toFixed(2)) : -lotSize;
     success = true;
   } finally {
+    // Ensure screencast is stopped under all circumstances
+    if (typeof screencastInterval !== 'undefined' && screencastInterval) {
+      clearInterval(screencastInterval);
+    }
     if (browser) {
       await browser.close();
       logger.info('🔒 Puppeteer browser closed.');
