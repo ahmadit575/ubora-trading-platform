@@ -6,8 +6,14 @@ import api from '../lib/api';
 function SignalCard({ signal, index }) {
   const confidence = signal.confidenceScore;
   const barClass = confidence >= 80 ? 'confidence-high' : confidence >= 60 ? 'confidence-medium' : 'confidence-low';
+  
+  const duration = signal.strategy === 'scalping' ? '1 Min' : '1 Day';
   const ts = new Date(signal.gmtTimestamp);
-  const timeStr = ts.toISOString().substring(11, 19) + ' GMT';
+  const entryTime = new Date(ts.getTime() - 2 * 60 * 1000);
+  const durationMs = signal.strategy === 'scalping' ? 1 * 60 * 1000 : 24 * 60 * 60 * 1000;
+  const exitTime = new Date(entryTime.getTime() + durationMs);
+
+  const formatTime = (d) => d.toISOString().substring(11, 19) + ' GMT';
 
   return (
     <div className="glass-card-sm animate-fade-in" style={{ animationDelay: `${index * 60}ms` }}>
@@ -17,30 +23,40 @@ function SignalCard({ signal, index }) {
           <span className={signal.direction === 'BUY' ? 'badge-buy' : 'badge-sell'}>{signal.direction}</span>
           <span className={signal.strategy === 'scalping' ? 'pill-scalping' : 'pill-daily'}>{signal.strategy}</span>
         </div>
-        <span style={{ fontSize: '0.7rem', color: '#64748b', fontFamily: 'monospace' }}>{timeStr}</span>
+        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 600 }}>Dur: {duration}</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
         <div>
           <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Entry Zone</div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#cbd5e1', fontFamily: 'monospace' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1', fontFamily: 'monospace' }}>
             {signal.entryZone?.min?.toFixed(5)} - {signal.entryZone?.max?.toFixed(5)}
           </div>
         </div>
         <div>
-          <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Stop Loss</div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f43f5e', fontFamily: 'monospace' }}>{signal.stopLoss?.toFixed(5)}</div>
+          <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Entry Time</div>
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8', fontFamily: 'monospace' }}>{formatTime(entryTime)}</div>
         </div>
         <div>
-          <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Take Profit</div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#10b981', fontFamily: 'monospace' }}>{signal.takeProfit?.toFixed(5)}</div>
+          <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Exit Time</div>
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8', fontFamily: 'monospace' }}>{formatTime(exitTime)}</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600, minWidth: '28px' }}>{confidence}%</span>
-        <div className="confidence-bar" style={{ flex: 1 }}>
-          <div className={`confidence-fill ${barClass}`} style={{ width: `${confidence}%` }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+        <div>
+          <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Stop Loss</div>
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#f43f5e', fontFamily: 'monospace' }}>{signal.stopLoss?.toFixed(5)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Take Profit</div>
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#10b981', fontFamily: 'monospace' }}>{signal.takeProfit?.toFixed(5)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Confidence</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '20px' }}>
+            <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>{confidence}%</span>
+          </div>
         </div>
       </div>
     </div>

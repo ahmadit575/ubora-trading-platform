@@ -69,29 +69,41 @@ export default function SignalsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                {['Pair', 'Direction', 'Strategy', 'Entry Zone', 'SL', 'TP', 'Confidence', 'Status', 'Time (GMT)'].map(h => (
+                {['Pair', 'Direction', 'Strategy', 'Duration', 'Entry Zone', 'SL', 'TP', 'Confidence', 'Entry Time', 'Exit Time', 'Status'].map(h => (
                   <th key={h} style={{ padding: '14px 16px', textAlign: 'left', color: '#64748b', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {signals.map((s) => (
-                <tr key={s._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '12px 16px', fontWeight: 700, color: '#e2e8f0' }}>{s.pair}</td>
-                  <td style={{ padding: '12px 16px' }}><span className={s.direction === 'BUY' ? 'badge-buy' : 'badge-sell'}>{s.direction}</span></td>
-                  <td style={{ padding: '12px 16px' }}><span className={s.strategy === 'scalping' ? 'pill-scalping' : 'pill-daily'}>{s.strategy}</span></td>
-                  <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#cbd5e1', fontSize: '0.8rem' }}>{s.entryZone?.min?.toFixed(5)} – {s.entryZone?.max?.toFixed(5)}</td>
-                  <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#f43f5e' }}>{s.stopLoss?.toFixed(5)}</td>
-                  <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#10b981' }}>{s.takeProfit?.toFixed(5)}</td>
-                  <td style={{ padding: '12px 16px' }}>{confidence(s.confidenceScore)}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600, background: s.status === 'active' ? 'rgba(16,185,129,0.1)' : s.status === 'closed' ? 'rgba(100,116,139,0.1)' : 'rgba(59,130,246,0.1)', color: s.status === 'active' ? '#10b981' : s.status === 'closed' ? '#94a3b8' : '#3b82f6' }}>
-                      {s.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#64748b', fontSize: '0.8rem' }}>{new Date(s.gmtTimestamp).toISOString().substring(0, 19).replace('T', ' ')}</td>
-                </tr>
-              ))}
+              {signals.map((s) => {
+                const duration = s.strategy === 'scalping' ? '1 Min' : '1 Day';
+                const ts = new Date(s.gmtTimestamp);
+                const entryTime = new Date(ts.getTime() - 2 * 60 * 1000);
+                const durationMs = s.strategy === 'scalping' ? 1 * 60 * 1000 : 24 * 60 * 60 * 1000;
+                const exitTime = new Date(entryTime.getTime() + durationMs);
+                
+                const formatDate = (d) => d.toISOString().substring(0, 19).replace('T', ' ') + ' GMT';
+
+                return (
+                  <tr key={s._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '12px 16px', fontWeight: 700, color: '#e2e8f0' }}>{s.pair}</td>
+                    <td style={{ padding: '12px 16px' }}><span className={s.direction === 'BUY' ? 'badge-buy' : 'badge-sell'}>{s.direction}</span></td>
+                    <td style={{ padding: '12px 16px' }}><span className={s.strategy === 'scalping' ? 'pill-scalping' : 'pill-daily'}>{s.strategy}</span></td>
+                    <td style={{ padding: '12px 16px', color: '#cbd5e1' }}>{duration}</td>
+                    <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#cbd5e1', fontSize: '0.8rem' }}>{s.entryZone?.min?.toFixed(5)} – {s.entryZone?.max?.toFixed(5)}</td>
+                    <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#f43f5e' }}>{s.stopLoss?.toFixed(5)}</td>
+                    <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#10b981' }}>{s.takeProfit?.toFixed(5)}</td>
+                    <td style={{ padding: '12px 16px' }}>{confidence(s.confidenceScore)}</td>
+                    <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#64748b', fontSize: '0.8rem' }}>{formatDate(entryTime)}</td>
+                    <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#64748b', fontSize: '0.8rem' }}>{formatDate(exitTime)}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600, background: s.status === 'active' ? 'rgba(16,185,129,0.1)' : s.status === 'closed' ? 'rgba(100,116,139,0.1)' : 'rgba(59,130,246,0.1)', color: s.status === 'active' ? '#10b981' : s.status === 'closed' ? '#94a3b8' : '#3b82f6' }}>
+                        {s.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
