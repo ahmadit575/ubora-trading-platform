@@ -22,10 +22,17 @@ import mt5Routes from './routes/mt5.routes.js';
 const app = express();
 const httpServer = createServer(app);
 
+// CORS origins — support production domain + local dev
+const allowedOrigins = [
+  env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:8080',
+].filter(Boolean);
+
 // Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: env.CLIENT_URL,
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -34,7 +41,14 @@ app.set('io', io);
 
 // Middleware
 app.use(cors({
-  origin: env.CLIENT_URL,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, same-origin proxy)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // In production behind reverse proxy, allow all
+    }
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
