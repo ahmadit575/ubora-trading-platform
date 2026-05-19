@@ -19,7 +19,7 @@ export function SocketProvider({ children }) {
 
     const s = io('/', {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
